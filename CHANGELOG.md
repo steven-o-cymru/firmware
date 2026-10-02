@@ -6,7 +6,10 @@ both printer models or through every real-world workflow.
 
 ## Unreleased
 
-Nothing yet.
+### Fixed
+
+- Moonraker reports its version, so Mainsail and Fluidd show it instead of
+  `?`.
 
 ## v20260827f-melitopol — 2026-09-24
 
