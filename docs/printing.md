@@ -14,10 +14,11 @@ want to drive the sequence yourself instead,
 [How a print runs](how-a-print-runs.md) is the page for that. An untouched FlashForge Orca profile works as
 shipped: nothing to paste into Machine start or end G-code, and files sliced
 before the mod keep printing. `[ff_print]` wraps `SDCARD_PRINT_FILE`/`M23`,
-reads the bed, nozzle, initial tool and first-layer height out of the file
-itself, and runs `START_PRINT` before the file's first line -- which the stock
-block needs, because it has no `G28` (its first motion, `G1 Z5 F2400`, assumes
-a homed machine) and no `M190` (nothing waits for the bed). At the other end
+reads the bed, nozzle, initial tool, used filament IDs and first-layer height
+out of the file itself, and runs `START_PRINT` before the file's first line --
+which the stock block needs, because it has no `G28` (its first motion,
+`G1 Z5 F2400`, assumes a homed machine) and no `M190` (nothing waits for the
+bed). At the other end
 its `;end_gcode` is a single move that turns nothing off, so
 `FF_AFTER_PRINT_END` runs the exit sequence when the job leaves the printing
 state.
@@ -38,6 +39,14 @@ needed for that.
 
 No re-slicing is needed: `[ff_print]` applies the print Z offset for any file,
 including ones sliced before the mod existed.
+
+For Orca files, a complete valid `; filament:` header supplies the tools for
+preflight and cleaning; its one-based IDs map to `T0`–`T3`. Automatic
+preparation passes this list to `START_PRINT` in the same invocation and
+cleans tools in T0–T3 order. A file with no such header, or one that does not
+parse, is prepared for its first tool only: the file's `Tn` commands are not
+scanned to build a list. An explicit slicer `START_PRINT` uses its own `TOOLS=` parameter;
+without one it falls back to `TOOL=`.
 
 `START_PRINT` options, for the explicit path: `TOOLS=0:220,2:240` every tool
 the file uses with its clean temperature (Orca: `is_extruder_used[n]`; a bare
