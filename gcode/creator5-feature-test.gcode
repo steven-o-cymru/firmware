@@ -11,7 +11,8 @@
 ;     it heats or homes anything. That refusal is itself the first
 ;     thing this file verifies.
 ;   * this file is the exception: it carries its own START_PRINT, with
-;     the TOOLS= list the automatic path cannot derive. So turn the
+;     the TOOLS= list the automatic path reads only from an OrcaSlicer
+;     header, which a hand-written file does not have. So turn the
 ;     implicit prepare off FOR THIS PRINT ONLY, or the machine homes,
 ;     purges and grabs twice:
 ;       SET_GCODE_VARIABLE MACRO=FF_BEFORE_PRINT_START VARIABLE=prepare VALUE=0

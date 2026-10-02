@@ -21,8 +21,9 @@ bed and grabbed the first tool before the file was ever handed to Klipper.
 
 Delete the app and that file is dangerous. So `[ff_print]` takes over
 `SDCARD_PRINT_FILE` and `M23`, reads the bed and nozzle temperatures, the
-first tool and the first-layer height **out of the file itself**, and runs the
-whole preparation before the file's first line executes.
+first tool, the tools the file uses and the first-layer height **out of the
+file itself**, and runs the whole preparation before the file's first line
+executes.
 
 The file did not change. What changed is that the preparation moved from an
 application nobody else could talk to into Klipper macros anyone can read.
@@ -56,7 +57,8 @@ touchscreen: pick a file, Print
 Mainsail, HelixScreen, OrcaSlicer — anything that speaks Moonraker
   │
   └─ [ff_print] wraps SDCARD_PRINT_FILE and M23
-        │   reads bed, nozzle, first tool and first-layer height from the file
+        │   reads bed, nozzle, first tool, used tools and first-layer height
+        │   from the file
         │
         ├─ FF_BEFORE_PRINT_START ─┬─► _FF_PREFLIGHT  calibration + tool gate
         │                         └─► START_PRINT    the preparation sequence
