@@ -48,6 +48,11 @@ pkg_build "$_top"
 # v20260824-nova-kakhovka and killed klippy at connect with a cffi arg-count
 # error. See docs/notes/20-klipper-fork.md.
 pkg_stage "$PKG_WORK/src/$_top/klippy" "klipper/klippy"
+# Klipper asks git for its version and falls back to klippy/.version; the
+# tarball has no .git, so without this file /printer/info reports "?". Not
+# removed by PKG_EXCLUDE, which drops the build stamp of that name only at the
+# package root.
+echo "$KLIPPER_DESCRIBE" > "$PKG_WORK/stage$MODDIR/klipper/klippy/.version"
 
 # Moonraker registers these beside klippy as config_examples and docs when
 # Klipper connects. Ship the matching examples and documentation so both
