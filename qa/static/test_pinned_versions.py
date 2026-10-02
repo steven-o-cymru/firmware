@@ -28,3 +28,17 @@ def test_klipper_describe_names_the_pinned_commit(pins):
     assert 'PKG_VERSION="%s~' % match.group(1) in conf, (
         "pkgs/klipper/pkg.conf and KLIPPER_DESCRIBE name different releases")
 
+
+@pytest.mark.parametrize("key,shown", [
+    ("STOCK_VERSION", None),
+    ("KLIPPER_VERSION", 8),
+    ("MAINSAIL_VERSION", None),
+    ("FLUIDD_VERSION", None),
+    ("MOONRAKER_VERSION", None),
+    ("HELIX_VERSION", None),
+])
+def test_versions_page_states_each_pin(pins, key, shown):
+    page = (ROOT / "docs/versions.md").read_text()
+    value = pins[key][:shown] if shown else pins[key]
+    assert "`%s`" % value in page, (
+        "docs/versions.md does not show %s=%s" % (key, value))
