@@ -6,7 +6,14 @@ both printer models or through every real-world workflow.
 
 ## Unreleased
 
-Nothing yet.
+### Changed
+
+- A print started from an OrcaSlicer file is now checked and prepared for
+  every tool the file uses, not only its first. A missing or uncalibrated
+  tool refuses the job before anything heats or moves, and each used tool is
+  purged and wiped before the print; tools the file does not use stay docked.
+  The list comes from Orca's `; filament:` header. A file without that header
+  is prepared for its first tool only, as before.
 
 ## v20260827f-melitopol — 2026-09-24
 

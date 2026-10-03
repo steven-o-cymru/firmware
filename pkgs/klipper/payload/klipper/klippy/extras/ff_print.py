@@ -16,17 +16,21 @@
 # It contains no print policy. It resolves the file, reads the slicer
 # metadata, and calls two ordinary macros defined in ff-print-macros.cfg:
 #
-#       FF_BEFORE_PRINT_START ORIGIN=<cmd> [BED=] [TOOL=] [NOZZLE=] [LAYER=]
+#       FF_BEFORE_PRINT_START ORIGIN=<cmd> [BED=] [TOOL=] [TOOLS=]
+#                             [NOZZLE=] [LAYER=]
 #       FF_AFTER_PRINT_END    STATE=<complete|cancelled|error|...>
 #
 # Everything derived is also published in get_status as printer.ff_print.*.
 #
 # Only the head of the file is read, and only what the file states in its own
-# commands -- as the app's own parser did:
+# commands -- as the app's own parser did -- plus Orca's used-filament header:
 #   bed          the first `M140`/`M190 S<t>`
 #   nozzle       the first `M104`/`M109 S<t>`
 #   first tool   the first bare `Tn` -- the file's initial extruder, NOT the
 #                lowest-numbered one it uses
+#   tools        Orca's one-based `; filament:` header -- every tool the file
+#                uses. Absent or invalid, no list is derived and the print is
+#                prepared for the first tool only
 #   layer        the first `;HEIGHT:` -- the FIRST layer's height, which is
 #                what the print Z offset's thin-layer term wants
 #
@@ -82,6 +86,31 @@ def _parse_metadata(path):
                            head, re.M)
     if tool_match is not None:
         metadata['tool'] = int(tool_match.group(1))
+
+    # Orca's header IDs are one-based filament IDs. For its Creator 5 Klipper
+    # output Tn selects that same ID minus one, irrespective of filament_map.
+    # Only a complete, valid field is used: a partial list would gate and
+    # clean some of the print's tools and silently skip the rest. Its order is
+    # not necessarily the first-use order (a Type 2 prime tower can reorder
+    # it). The body is NOT scanned for Tn as a fallback: that means reading
+    # the whole file inside the reactor, and a selection is not proof of use.
+    tools = []
+    header = re.search(r'^; HEADER_BLOCK_START\r?\n(.*?)'
+                       r'^; HEADER_BLOCK_END\r?$', head, re.M | re.S)
+    if header is not None:
+        field = re.search(r'^;[ \t]*filament:[ \t]*([^\r\n]*)\r?$',
+                          header.group(1), re.M | re.I)
+        if field is not None and re.fullmatch(
+                r'[ \t]*[1-4](?:[ \t]*,[ \t]*[1-4])*[ \t]*',
+                field.group(1)):
+            for value in field.group(1).split(','):
+                tool = int(value.strip()) - 1
+                if tool not in tools:
+                    tools.append(tool)
+
+    if tools:
+        # This is a participant set, not tool-use order. Clean predictably.
+        metadata['tools'] = sorted(tools)
 
     # First-layer height, from the per-layer marker the slicer emits. This
     # feeds the print Z offset's thin-layer term, which is a FIRST-layer
@@ -149,6 +178,7 @@ class FFPrint:
             'origin': self.origin,
             'active': self.active,
             'tool': self.metadata.get('tool'),
+            'tools': self.metadata.get('tools', []),
             'nozzle': self.metadata.get('nozzle'),
             'bed': self.metadata.get('bed'),
             'layer': self.metadata.get('layer'),
@@ -187,6 +217,9 @@ class FFPrint:
                                ('layer', 'LAYER', '%s')):
             if self.metadata.get(key) is not None:
                 params.append('%s=%s' % (name, fmt % (self.metadata[key],)))
+        if self.metadata.get('tools'):
+            params.append('TOOLS=%s' % ','.join(
+                str(tool) for tool in self.metadata['tools']))
 
         # Let the macro raise: a refusal here must stop the print BEFORE the
         # base command loads and resumes the file.
