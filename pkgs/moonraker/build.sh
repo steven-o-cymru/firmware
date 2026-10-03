@@ -27,6 +27,14 @@ _src="$PKG_WORK/src/moonraker-${MOONRAKER_VERSION#v}/moonraker"
 pkg_stage "$_src" "moonraker"
 rm -rf "$PKG_WORK/stage$MODDIR/moonraker/tests"
 
+# Moonraker asks git for its version, then an installed package's
+# __version__, then this file -- and a tarball staged by hand has neither of
+# the first two, so without it /server/info reports "?" and so does every UI.
+# It sits INSIDE moonraker/, where utils.get_software_info reads it, which is
+# also what keeps it: PKG_EXCLUDE drops the build stamp of the same name only
+# at the package root.
+echo "$MOONRAKER_VERSION" > "$PKG_WORK/stage$MODDIR/moonraker/.version"
+
 # moonraker.conf is Moonraker's config -- its socket, its trusted clients and
 # its components -- and is meaningless without the server it configures.
 #

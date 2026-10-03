@@ -15,6 +15,11 @@ both printer models or through every real-world workflow.
   The list comes from Orca's `; filament:` header. A file without that header
   is prepared for its first tool only, as before.
 
+### Fixed
+
+- Moonraker and Klipper report their versions, so Mainsail and Fluidd show
+  them instead of `?`.
+
 ## v20260827f-melitopol — 2026-09-24
 
 ### Added

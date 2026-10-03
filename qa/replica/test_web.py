@@ -21,6 +21,9 @@ same s6-rc the boot uses -- only the transition's argument differs.
 Its own module, so it gets its own container: the fixture must run before
 anything takes the s6-rc lock.
 """
+import json
+import re
+
 import pytest
 
 pytestmark = pytest.mark.replica
@@ -197,6 +200,16 @@ def _moonraker_get(box, path):
     """GET off the live moonraker. wget, because the printer has no curl and
     this container has no route to the host's python."""
     return box.sh("wget -q -O - 'http://127.0.0.1:7125%s'" % path).text
+
+
+def test_moonraker_reports_its_version(web):
+    """A tree staged from a tarball has no git and no package metadata, so
+    Moonraker falls back to moonraker/.version -- which the recipe writes.
+    Without it every UI shows the version as "?"."""
+    info = json.loads(_moonraker_get(web, "/server/info"))["result"]
+    version = info["moonraker_version"]
+    assert re.match(r"v\d+\.\d+\.\d+", version), (
+        "moonraker does not know its own version: %r" % version)
 
 
 def test_timelapse_component_loaded(web):
